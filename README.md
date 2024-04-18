@@ -1,3 +1,57 @@
+## Install
+
+```bash
+sudo apt-get install python3-dev  
+ 
+sudo apt-get install cmake
+ 
+sudo pip install  pytest
+ 
+sudo pip install  numpy
+ 
+sudo pip install  scipy
+
+sudo pip install  pybind11
+ 
+git clone https://github.com/pybind/pybind11.git
+ 
+cd pybind11
+mkdir build
+cd build
+cmake ..
+make check -j 4
+sudo make install
+
+git clone https://github.com/facebookresearch/Replica-Dataset.git
+sudo apt-get install wget pigz unzip
+cd Replica-Dataset
+git submodule update --init
+
+
+cd 3rdparty/Pangolin
+mkdir build
+cd build
+cmake ..
+make -j
+sudo make install
+
+
+cd ../../../
+mkdir build
+cd build
+cmake ..
+make -j
+```
+
+
+## Usage
+
+### Viewer
+  
+  ```bash
+  ./build/ReplicaSDK/ReplicaViewer /media/chrisliu/T9/Datasets/replica_v1/room_0/mesh.ply /media/chrisliu/T9/Datasets/replica_v1/room_0/textures /media/chrisliu/T9/Datasets/replica_v1/room_0/glass.sur
+  ```
+
 # Replica Dataset
 
 The Replica Dataset is a dataset of high quality reconstructions of a
