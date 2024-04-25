@@ -1,8 +1,6 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #include <EGL.h>
 #include <PTexLib.h>
-#include <filesystem>
-#include <iostream>
 #include <pangolin/image/image_convert.h>
 
 #include "GLCheck.h"
@@ -25,34 +23,9 @@ int main(int argc, char *argv[]) {
   }
 
   std::string renderPath;
-  std::vector<pangolin::OpenGlMatrix> renderPoses;
   if (argc == 5) {
     renderPath = std::string(argv[4]);
     ASSERT(pangolin::FileExists(renderPath));
-
-    std::ifstream file(renderPath);
-    std::string line;
-    // x y z qx qy qz qw
-    while (std::getline(file, line)) {
-      std::istringstream iss(line);
-      float x, y, z, qx, qy, qz, qw;
-      if (!(iss >> x >> y >> z >> qx >> qy >> qz >> qw)) {
-        break;
-      }
-      Eigen::Quaterniond q(qw, qx, qy, qz);
-
-      static Eigen::Matrix3d R_OpenCV_To_OpenGL = Eigen::Matrix3d::Identity();
-      R_OpenCV_To_OpenGL(0, 0) = 1.0;
-      R_OpenCV_To_OpenGL(1, 1) = -1.0;
-      R_OpenCV_To_OpenGL(2, 2) = -1.0;
-      Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
-      auto rot = q.toRotationMatrix();
-      T.topLeftCorner(3, 3) = rot * R_OpenCV_To_OpenGL;
-      T.topRightCorner(3, 1) = Eigen::Vector3d(x, y, z);
-      pangolin::OpenGlMatrix pose(T);
-
-      renderPoses.push_back(pose);
-    }
   }
 
   // const int width = 1280;
@@ -117,37 +90,16 @@ int main(int argc, char *argv[]) {
 
   // load mesh and textures
   PTexMesh ptexMesh(meshFile, atlasFolder);
-  ptexMesh.SetExposure(0.01);
-  ptexMesh.SetGamma(1.697);
-  ptexMesh.SetSaturation(1.5);
 
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
   pangolin::ManagedImage<float> depthImage(width, height);
   pangolin::ManagedImage<uint16_t> depthImageInt(width, height);
 
   // Render some frames
-  size_t numFrames = 100;
-  if (renderPoses.size() > 0) {
-    numFrames = renderPoses.size();
-  }
-  std::filesystem::create_directories("eval/results");
-  std::ofstream poseFile("eval/traj.txt");
+  const size_t numFrames = 100;
   for (size_t i = 0; i < numFrames; i++) {
     std::cout << "\rRendering frame " << i + 1 << "/" << numFrames << "... ";
     std::cout.flush();
-
-    if (renderPoses.size() > 0) {
-      s_cam.GetModelViewMatrix() = renderPoses[i].Inverse();
-
-      Eigen::Matrix4d view_matrix = renderPoses[i];
-      // 16 col per line
-      for (int j = 0; j < 4; j++) {
-        for (int k = 0; k < 4; k++) {
-          poseFile << view_matrix(j, k) << " ";
-        }
-      }
-      poseFile << "\n";
-    }
 
     // Render
     frameBuffer.Bind();
@@ -184,7 +136,7 @@ int main(int argc, char *argv[]) {
     render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
     char filename[1000];
-    snprintf(filename, 1000, "eval/results/frame%06zu.jpg", i);
+    snprintf(filename, 1000, "frame%06zu.jpg", i);
 
     pangolin::SaveImage(image.UnsafeReinterpret<uint8_t>(),
                         pangolin::PixelFormatFromString("RGB24"),
@@ -212,7 +164,7 @@ int main(int argc, char *argv[]) {
       for (size_t i = 0; i < depthImage.Area(); i++)
         depthImageInt[i] = static_cast<uint16_t>(depthImage[i] + 0.5f);
 
-      snprintf(filename, 1000, "eval/results/depth%06zu.png", i);
+      snprintf(filename, 1000, "depth%06zu.png", i);
       pangolin::SaveImage(depthImageInt.UnsafeReinterpret<uint8_t>(),
                           pangolin::PixelFormatFromString("GRAY16LE"),
                           std::string(filename), true, 34.0f);

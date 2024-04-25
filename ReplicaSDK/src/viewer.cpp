@@ -7,9 +7,10 @@
 #include "GLCheck.h"
 #include "MirrorRenderer.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
 
-  ASSERT(argc == 3 || argc == 4, "Usage: ./ReplicaViewer mesh.ply textures [glass.sur]");
+  ASSERT(argc == 3 || argc == 4,
+         "Usage: ./ReplicaViewer mesh.ply textures [glass.sur]");
 
   const std::string meshFile(argv[1]);
   const std::string atlasFolder(argv[2]);
@@ -23,8 +24,10 @@ int main(int argc, char* argv[]) {
   }
 
   const int uiWidth = 180;
-  const int width = 1280;
-  const int height = 960;
+  // const int width = 1280;
+  // const int height = 960;
+  const int width = 1200;
+  const int height = 680;
 
   // Setup OpenGL Display (based on GLUT)
   pangolin::CreateWindowAndBind("ReplicaViewer", uiWidth + width, height);
@@ -33,7 +36,7 @@ int main(int argc, char* argv[]) {
     pango_print_error("Unable to initialize GLEW.");
   }
 
-  if(!checkGLVersion()) {
+  if (!checkGLVersion()) {
     return 1;
   }
 
@@ -48,29 +51,25 @@ int main(int argc, char* argv[]) {
 
   // Tell the base view to arrange its children equally
   if (uiWidth != 0) {
-    pangolin::CreatePanel("ui").SetBounds(0, 1.0f, 0, pangolin::Attach::Pix(uiWidth));
+    pangolin::CreatePanel("ui").SetBounds(0, 1.0f, 0,
+                                          pangolin::Attach::Pix(uiWidth));
   }
 
-  pangolin::View& container =
-      pangolin::CreateDisplay().SetBounds(0, 1.0f, pangolin::Attach::Pix(uiWidth), 1.0f);
+  pangolin::View &container = pangolin::CreateDisplay().SetBounds(
+      0, 1.0f, pangolin::Attach::Pix(uiWidth), 1.0f);
 
   pangolin::OpenGlRenderState s_cam(
       pangolin::ProjectionMatrixRDF_TopLeft(
-          width,
-          height,
-          width / 2.0f,
-          width / 2.0f,
-          (width - 1.0f) / 2.0f,
-          (height - 1.0f) / 2.0f,
-          0.1f,
-          100.0f),
+          width, height, width / 2.0f, width / 2.0f, (width - 1.0f) / 2.0f,
+          (height - 1.0f) / 2.0f, 0.1f, 100.0f),
       pangolin::ModelViewLookAtRDF(0, 0, 4, 0, 0, 0, 0, 1, 0));
 
   pangolin::Handler3D s_handler(s_cam);
 
-  pangolin::View& meshView = pangolin::Display("MeshView")
-                                 .SetBounds(0, 1.0f, 0, 1.0f, (double)width / (double)height)
-                                 .SetHandler(&s_handler);
+  pangolin::View &meshView =
+      pangolin::Display("MeshView")
+          .SetBounds(0, 1.0f, 0, 1.0f, (double)width / (double)height)
+          .SetHandler(&s_handler);
 
   container.AddDisplay(meshView);
 
@@ -95,7 +94,8 @@ int main(int argc, char* argv[]) {
 
   pangolin::Var<float> exposure("ui.Exposure", 0.01, 0.0f, 0.1f);
   pangolin::Var<float> gamma("ui.Gamma", ptexMesh.Gamma(), 1.0f, 3.0f);
-  pangolin::Var<float> saturation("ui.Saturation", ptexMesh.Saturation(), 0.0f, 2.0f);
+  pangolin::Var<float> saturation("ui.Saturation", ptexMesh.Saturation(), 0.0f,
+                                  2.0f);
   pangolin::Var<float> depthScale("ui.Depth_scale", 0.1f, 0.0f, 1.0f);
 
   pangolin::Var<bool> wireframe("ui.Wireframe", false, true);
@@ -123,6 +123,8 @@ int main(int argc, char* argv[]) {
     if (meshView.IsShown()) {
       meshView.Activate(s_cam);
 
+      std::cout << s_cam.GetModelViewMatrix() << std::endl;
+
       if (drawBackfaces) {
         glDisable(GL_CULL_FACE);
       } else {
@@ -146,12 +148,14 @@ int main(int argc, char* argv[]) {
 
       if (drawMirrors) {
         for (size_t i = 0; i < mirrors.size(); i++) {
-          MirrorSurface& mirror = mirrors[i];
+          MirrorSurface &mirror = mirrors[i];
           // capture reflections
-          mirrorRenderer.CaptureReflection(mirror, ptexMesh, s_cam, frontFace, drawDepth, depthScale);
+          mirrorRenderer.CaptureReflection(mirror, ptexMesh, s_cam, frontFace,
+                                           drawDepth, depthScale);
 
           // render mirror
-          mirrorRenderer.Render(mirror, mirrorRenderer.GetMaskTexture(i), s_cam, drawDepth);
+          mirrorRenderer.Render(mirror, mirrorRenderer.GetMaskTexture(i), s_cam,
+                                drawDepth);
         }
       }
     }

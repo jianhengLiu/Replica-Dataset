@@ -40,6 +40,7 @@ cd ../../../
 mkdir build
 cd build
 cmake ..
+# make with cpp17
 make -j
 ```
 
@@ -50,6 +51,12 @@ make -j
   
   ```bash
   ./build/ReplicaSDK/ReplicaViewer /media/chrisliu/T9/Datasets/replica_v1/room_0/mesh.ply /media/chrisliu/T9/Datasets/replica_v1/room_0/textures /media/chrisliu/T9/Datasets/replica_v1/room_0/glass.sur
+  ```
+
+### Render
+
+  ```bash
+  ./build/ReplicaSDK/ReplicaRenderer /media/chrisliu/T9/Datasets/replica_v1/room_0/mesh.ply /media/chrisliu/T9/Datasets/replica_v1/room_0/textures /media/chrisliu/T9/Datasets/replica_v1/room_0/glass.sur
   ```
 
 # Replica Dataset
