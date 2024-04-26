@@ -42,12 +42,13 @@ int main(int argc, char *argv[]) {
       Eigen::Quaterniond q(qw, qx, qy, qz);
 
       static Eigen::Matrix3d R_OpenCV_To_OpenGL = Eigen::Matrix3d::Identity();
-      R_OpenCV_To_OpenGL(0, 0) = 1.0;
-      R_OpenCV_To_OpenGL(1, 1) = -1.0;
-      R_OpenCV_To_OpenGL(2, 2) = -1.0;
+      R_OpenCV_To_OpenGL << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+
+      static Eigen::Matrix3d R_2 = Eigen::Matrix3d::Identity();
+      R_2 << 0, 1, 0, -1, 0, 0, 0, 0, 1;
       Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
       auto rot = q.toRotationMatrix();
-      T.topLeftCorner(3, 3) = rot * R_OpenCV_To_OpenGL;
+      T.topLeftCorner(3, 3) = rot * R_OpenCV_To_OpenGL * R_2;
       T.topRightCorner(3, 1) = Eigen::Vector3d(x, y, z);
       pangolin::OpenGlMatrix pose(T);
 
@@ -130,6 +131,7 @@ int main(int argc, char *argv[]) {
   if (renderPoses.size() > 0) {
     numFrames = renderPoses.size();
   }
+  std::filesystem::remove_all("eval");
   std::filesystem::create_directories("eval/results");
   std::ofstream poseFile("eval/traj.txt");
   for (size_t i = 0; i < numFrames; i++) {
