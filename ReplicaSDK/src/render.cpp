@@ -26,9 +26,11 @@ int main(int argc, char *argv[]) {
 
   std::string renderPath;
   std::vector<pangolin::OpenGlMatrix> renderPoses;
+  std::filesystem::path file_path;
   if (argc == 5) {
     renderPath = std::string(argv[4]);
     ASSERT(pangolin::FileExists(renderPath));
+    file_path = std::filesystem::path(renderPath).replace_extension();
 
     std::ifstream file(renderPath);
     std::string line;
@@ -48,7 +50,8 @@ int main(int argc, char *argv[]) {
       R_2 << 0, 1, 0, -1, 0, 0, 0, 0, 1;
       Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
       auto rot = q.toRotationMatrix();
-      T.topLeftCorner(3, 3) = rot * R_OpenCV_To_OpenGL * R_2;
+      // T.topLeftCorner(3, 3) = rot * R_OpenCV_To_OpenGL * R_2;
+      T.topLeftCorner(3, 3) = rot;
       T.topRightCorner(3, 1) = Eigen::Vector3d(x, y, z);
       pangolin::OpenGlMatrix pose(T);
 
@@ -131,9 +134,11 @@ int main(int argc, char *argv[]) {
   if (renderPoses.size() > 0) {
     numFrames = renderPoses.size();
   }
-  std::filesystem::remove_all("eval");
-  std::filesystem::create_directories("eval/results");
-  std::ofstream poseFile("eval/traj.txt");
+
+  auto output_path = file_path / "eval";
+  std::filesystem::remove_all(output_path);
+  std::filesystem::create_directories(output_path / "results");
+  std::ofstream poseFile(output_path / "traj.txt");
   for (size_t i = 0; i < numFrames; i++) {
     std::cout << "\rRendering frame " << i + 1 << "/" << numFrames << "... ";
     std::cout.flush();
@@ -186,7 +191,8 @@ int main(int argc, char *argv[]) {
     render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
     char filename[1000];
-    snprintf(filename, 1000, "eval/results/frame%06zu.jpg", i);
+    snprintf(filename, 1000, (output_path / "results/frame%06zu.jpg").c_str(),
+             i);
 
     pangolin::SaveImage(image.UnsafeReinterpret<uint8_t>(),
                         pangolin::PixelFormatFromString("RGB24"),
@@ -214,7 +220,8 @@ int main(int argc, char *argv[]) {
       for (size_t i = 0; i < depthImage.Area(); i++)
         depthImageInt[i] = static_cast<uint16_t>(depthImage[i] + 0.5f);
 
-      snprintf(filename, 1000, "eval/results/depth%06zu.png", i);
+      snprintf(filename, 1000, (output_path / "results/depth%06zu.png").c_str(),
+               i);
       pangolin::SaveImage(depthImageInt.UnsafeReinterpret<uint8_t>(),
                           pangolin::PixelFormatFromString("GRAY16LE"),
                           std::string(filename), true, 34.0f);
